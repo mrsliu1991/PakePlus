@@ -271,6 +271,11 @@ window.addBookmark = function (key) {
         saveLocalLists();
         renderBookmarks();
         renderContentTable();
+        
+        // 如果当前是搜索视图，也需要刷新搜索结果
+        if (currentView === 'search') {
+            doSearch();
+        }
     }
 };
 
@@ -291,6 +296,15 @@ function renderBookmarks() {
             bookmarks.splice(idx, 1);
             saveLocalLists();
             renderBookmarks();
+            
+            // 如果当前是搜索视图，也需要刷新搜索结果
+            if (currentView === 'search') {
+                doSearch();
+            }
+            // 如果当前是分类视图，也需要刷新内容表格
+            else if (currentView === 'en-cn' || currentView === 'cn-en') {
+                renderContentTable();
+            }
         };
 
         li.appendChild(delBtn);
@@ -418,10 +432,16 @@ function renderSearchResult(data) {
         return;
     }
     countDiv.textContent = '共 ' + data.length + ' 条结果';
-    let html = '<table><thead><tr><th>英文</th><th>中文</th></tr></thead><tbody>';
+    let html = '<table><thead><tr><th>英文</th><th>中文</th><th>收藏</th></tr></thead><tbody>';
     data.forEach(function (item) {
+        const cat = item._cat;
+        // 为搜索结果创建一个合适的字母分类
+        const letter = (item.en || item.abbr_en || item.org_abbr_en || '')[0];
+        const letterKey = letter && /[a-zA-Z]/.test(letter) ? letter.toUpperCase() : 'A';
+        
         html += '<tr><td>' + (item.en || item.abbr_en || item.org_abbr_en || '') + '</td><td>' + 
-                (item.cn || item.abbr_cn || item.org_cn || '') + '</td></tr>';
+                (item.cn || item.abbr_cn || item.org_cn || '') + '</td><td>' +
+                renderBookmarkBtn(item, cat, letterKey) + '</td></tr>';
     });
     html += '</tbody></table>';
     tableDiv.innerHTML = html;
